@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+</head>
+<body>
+    <style>
+        @font-face {
+            font-family: "Montserrat";
+            font-style: normal;
+            font-weight: 700;
+            src: url(./fonts/Montserrat-Bold.ttf);
+        }
+
+        @font-face {
+            font-family: "Montserrat";
+            font-style: normal;
+            font-weight: 500;
+            src: url(./fonts/Montserrat-Medium.ttf);
+        }
+
+
+        @font-face {
+            font-family: "Montserrat";
+            font-style: normal;
+            font-weight: 400;
+            src: url(./fonts/Montserrat-Regular.ttf);
+        }
+
+        body {
+            margin: 0;
+            font-family: "Montserrat";
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-width: 100vw;
+            flex-direction: column;
+        }
+        #start, #continueQuiz, #next {
+            width: 550px;
+            height: 150px;
+            border-radius: 15px;
+            color: #404040;
+            background-color: #9DBC98;
+            font-size: 90px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 40px;
+        }
+
+        #continueQuiz {
+            background-color: #bbbc98;
+        }
+
+        #next {
+            width: 300px;
+            font-size: 30px;
+            height: 75px;
+        }
+
+        #finish {
+            font-size: 90px;
+        }
+
+        #question {
+            margin: 50px auto;
+            font-size: 60px;
+            max-width: 900px;
+            text-align: left;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        #questionNumber, #question, #next, #finish, #continueQuiz {
+            display: none;
+        }
+    </style>
+    <div class="container">
+        <button id="start" onclick="start()">Начать</button>
+        <button id="continueQuiz" onclick="continueQuiz()">Продолжить</button>
+        <div id="questionNumber">Вопрос: <span id="questionNumberSpan"></span></div>
+        <div id="question"></div>
+        <button id="next" onclick="next()">Дальше</button>
+        <div id="finish">
+            Аня, поздравляю! <br>
+            Ты ответила на все вопросы
+        </div>
+    </div>
+    <script>
+        const questionFlowKey = 'questionsFlow'
+        const questionStepKey = 'questionStep'
+        const isStartedKey = 'isStarted'
+        let questionStep = 0;
+        let questionsFlow = [];
+        const tasks = [
+            "Что должно быть у абсолютно каждого тега?",
+            "Как открыть тег?",
+            "Как обозначается конец тега?",
+            "Что такое парный тэг?",
+            "Какие бывают теги помимо парных?",
+            "Какие бывают теги помимо непарных?",
+            "Что такое аттрибуты тега?",
+            "Что можно положить внутри парного тега?",
+            "Что можно положить внутри непарного тега?",
+            "За что отвечает тег doctype?",
+            "С какого тега должан начинаться каждая HTML страница?",
+            "Когда тег doctype можно не использовать?",
+            "Сколько тегов <html> должно быть на HTML странице?",
+            "Когда можно не использовать тег <html> ?",
+            "Когда можно не использовать тег <div>?",
+            "Когда можно не использовать тег <head> ?",
+            "Какие теги обязательно должны быть внутри тега <head> ?",
+            "Когда надо использовать два тега <head> на одной HTML странице?",
+            "Где должен располагаться тег <title>?",
+            "Сколько тегов <meta> можно расположить внутри тега <body>?",
+            "Сколько максимум можно добавить тегов <li> внутри тега <ul>?",
+            "Можно ли применить css стили для тега <head>?",
+            "Для чего нужно использовать тег div?",
+            "Для чего нужно использовать тег span?",
+            "Какие стили по-умолчанию у тега div?",
+            "Какие стили по-умолчанию у тега span?",
+            "В чём отличие div от span?",
+            "Почему использовать ul для списка лучше чем просто div?",
+            "Какие стили по-умолчанию у тега ul?",
+            "Какие стили по-умолчанию у тега li?",
+            "Как создать список? Какая у него структура?",
+            "Когда надо использовать ul, а когда нет?",
+            "Можно ли в ul поместить вместо li тег div?",
+            "Что такое контейнер?",
+            "Можно ли положить в один контейнер другой контейнер?",
+            "Можно ли сделать вложенность больше чем из 10-ти контейнеров?",
+            "Какие теги должны присутствовать абсолютно в каждом html файл?",
+            "Какое расширение файла должно быть у файла с HTML страницей?",
+            "Будет ли работать HTML страница, если написать все теги внутри неё в одну строку?",
+            "Что такое селектор?",
+            "Напиши селектор для класса",
+            "Напиши селектор для тега",
+            "Напиши селектор используя и класс и тег",
+            "Напиши селектор с псевдоэлементом",
+            "Напиши селектор с псевдоклассом",
+            "Напиши селектор с псевдоклассом и псевдоэлементом",
+            "Какое расширение файла должно быть у файла со стилями?",
+            "Можно ли написать .container::after::before",
+            "Напиши селектор что бы цвет текста внутри псевдоэлемента менялся на красный при наведении на класс container.",
+            "Что такое css свойства?",
+            "Что такое тег?",
+            "Что такое класс?",
+            "Для чего нужен класс?",
+            "Как сделать так, что бы элемент не было видно на странице?",
+            "В чём отличие между opacity: 0 и display: none",
+            "Как сделать курсор в виде пальчика?",
+            "Как сделать круг?",
+            "Как добавить рамку вокруг элемента?",
+            "Как добавить рамку только справа?",
+            "Как сделать закруглённую рамку?",
+            "Что делает border?",
+            "Что делает border-radius?",
+            "Как расположить текст по центру?",
+            "Как внутри контейнера расположить дочерние элементы с одинаковыми отступами между ними?",
+            "Как расположить один элемент внутри другого элемента ровно по центра, как по горизонтали так и по вертикали?",
+            "Когда дочерние элементы внутри flex контейнера начинают переноситься?",
+            "За что отвечает свойство justify-content?",
+            "Можно ли свойство justify-content применить к display: block? А к display: inline?",
+            "Как сказать flex контейнеру что его дочерние элементы не должны переноситься",
+            "Как сказать flex контейнеру что его дочерние элементы должны переноситься",
+            "Какие стили по-умолчанию имеет flex контейнер",
+            "Как сделать так, что бы сайт адаптировался под мобильные устройства",
+            "Напиши media query",
+            "В чём разница между media query и медиа выражением?",
+            "Какие бывают размеры экранов?",
+            "Как можно добавить расстояние между двумя элементами",
+            "В чём отличие margin от padding",
+            "Когда лучше использовать margin, а когда padding?",
+            "Как задать margin только для верха?",
+            "В записи margin: 10px 15px 7px 9px расскажи с Какой стороны какие будут отспуты?",
+            "Каким цветом в браузере выделяется margin?",
+            "Каким цветом в браузере выделяется padding?",
+            "Что такое внутренний отступ?",
+            "Что такое внешний отступ?",
+            "Что значит нативный?",
+            "Что значит кастомизировать?",
+            "Для чего нужны отступы в коде?",
+            "Как добавить градиент?",
+            "Какие бывают значения у font-weight?",
+            "Как изменить жирность шрифта?",
+            "Что такое вес шрифта?",
+            "В чем отличие веса шрифта и жирности шрифта?",
+            "Какой самый большоай размер font-size можно задать?",
+            "Как задать размер шрифта?",
+            "Как поменять шрифт?",
+            "За что отвечает font-family?",
+            "Можно ли подключить свой шрифт на страницу?",
+            "Сколько максимум шрифтов можно подключить на страницу?",
+            "Что делает @font-face",
+            "За что отвечает свойство white-space?",
+            "Как добавить подччеркивание для текста?",
+            "Как покрасить текст?",
+            "Как покрасить фон элемента?",
+            "Можно ли покрасить фон у тега <html> ?",
+            "Можно ли покрасить фон у тега <doctype> ?",
+            "За что отвечает box-sizing?",
+            "Какие ты знаешь свойства display? И кратко расскажи про каждый",
+            "Какое значение display по-умолчанию?",
+            "Какие css свойства можно применить к display: block, которые нельзя применить к display: inline",
+            "Как один элемент с position: absolute расположить выше другого элемента с position: absolute?",
+            "Что делает z-index?",
+            "В каких единицах можно задавать значения в css для ширины и высоты?",
+            "Из чего высчитывается размер элемента?",
+            "Что делает width?",
+            "Как задать ширину элементу?",
+            "Можно ли задать ширину в процентах?",
+            "Что делает height?",
+            "Как задать высоту элементу?",
+            "Можно ли задать высоту в пикселях?",
+            "Какие обязательные свойства должны быть у псевдоэлемента? ",
+            "Что такое псевдоэлемент?",
+            "Когда стоит использовать псевдоэлемент?",
+            "Когда не стоит использовать псевдоэлемент?",
+            "Какие бывают псевдоэлементы?",
+            "Что такое псевдокласс?",
+            "Какие бывают псевдоклассы?",
+            "Какие создать свой собственный псевдокласс?",
+            "Когда стоит использовать псевдоклассы?",
+            "Когда не стоит использовать псевдоклассы?",
+            "Пседовклассы одинаковые для всех элементов?",
+            "Для чего нужен тег input?",
+            "Какие атрибуты есть у тега input?",
+            "Как сделать так, что бы при наведении на элемент его цвет менялся плавно?",
+            "Что делает transition?",
+            "Как добавить тень?",
+            "Как сделать градиентную тень?",
+            "Какие стили по-умолчанию у тега a?",
+            "Какие обязательные атрибуты у тега a?",
+            "Как создать ссылку?",
+            "Как убрать подчеркивание у ссылки?",
+            "Как добавить картинку?",
+            "Как указать путь до картинки, которая лежить в соседней папке?",
+            "Где хранятся сами файлы картинок?",
+            "Какие форматы изображений ты знаешь? Расскажи немного про каждый.",
+            "Можно ли картинке присвоить disply: none?",
+            "Существует ли такой формат изображений как svg?",
+            "Существует ли такой формат изображений как jpg?",
+            "Существует ли такой формат изображений как png?",
+            "В чём отличие svg от png?",
+            "В чём отличие svg от jpg?",
+            "В чём отличие png от jpg?",
+            "Когда лучше использовать svg?",
+            "Когда лучше использовать png?",
+            "Когда лучше использовать jpg?",
+            "Какой из этих трёх форматов изображений нельзя использовать внутри тега <img>? svg, png или jpg?",
+            "Какой минимальный вес должен быть у картинки что бы её можно было отобразить на странице?",
+            "Картинку какого размера(веса) невозможно добавить на страницу?",
+            "Какое значение position по-умолчанию?",
+            "За что отвечает position relative? Двигает относительно чего?",
+            "Какое свойство надо использовать что бы сдвинуть элемент относительно его начальной позиции?",
+            "За что отвечает position absolute? Двигает относительно чего?",
+            "Какое свойство надо использовать что бы сдвинуть элемент относительно другого элемента?",
+            "Что делает left?",
+            "Что делает top?",
+            "Что делает right?",
+            "Что делает bottom?",
+            "Можно ли применить свойство left к position: absolute?",
+            "Можно ли применить свойство bottom к position: static?",
+            "Можно ли применить свойство top к position: relative?",
+            "Можно ли применить свойство right к position: relative?",
+            "Какое из css свойство: top, right, bottom, left можно применить к position: absolute?",
+            "Можно ли применить свойство top к display: flex?",
+            "Как выйти на один уровень вверх из папки?",
+            "Как выйти на два уровеня вверх из папки?",
+            `Нужно сделать рамку у элемента и покрасить фон в красный, это правильный код?
+            .container {
+                border: 1px solid #000;
+                color: red;
+            }`,
+            `Какой/какие из способов покраски цвета в зелёный цвет неправильные?
+            color: green;
+            color: #008000;
+            color: #80004f;
+            `,
+            `
+            Найди ошибку в стилях 
+                .container {
+                    color: red;
+                    font-size: 14px;
+                    font-weight: 550;
+                }
+            `,
+
+            `
+            Найди ошибку в стилях 
+                container {
+                    display: none;
+                    font-weight: 500px;
+                    width: 100px;
+                }
+            `,
+
+            `
+            Найди ошибку в стилях 
+            .container::honer {
+                display: none;
+                height: 100%;
+                width: 100%;
+                border: 1px solid #000;
+                display: flex;
+            }
+            `,
+
+            `
+            Найди ошибку в стилях 
+                .container {
+                    width: 100px;
+                    height: 33%
+                    position: absolut;
+                }
+                .children {
+                    width: 100%;
+                    height: 100%;
+                    position: absolut;
+                    top: 0;
+                    left: 0;
+                }
+            `,
+
+            `
+            Найди ошибку в стилях 
+                ::after {
+                    content: "";
+                    color: red;
+                    font-weight: 500;
+                    width: 100px;
+                    height: 73px;
+                }
+            `,
+
+            `
+            Найди ошибку в коде
+            <div clas="tutNetOshibki">
+                <ul>
+                    <li>один</li>
+                    <li>два<li>
+                    <li>три</li>
+                </ul>
+            </div>
+            `,
+
+            `
+            Найди ошибку в коде
+            <a href="#">ссылка</a>
+            `,
+            `
+            Найди ошибку в коде
+                <div class="container">
+                    <div clas="children1">
+                        <input type="text">Привет</input>
+                    </div>
+                </div>
+            `
+
+
+        ];
+
+        const increaseQuestionStep = () => {
+            localStorage.setItem(questionStepKey, ++questionStep);
+            changeQuestionStep()
+        }
+
+        const changeQuestion = () => {
+            document.getElementById('question').textContent = tasks[questionsFlow[questionStep]];
+        }
+
+        const changeQuestionStep = () => {
+            document.getElementById('questionNumberSpan').textContent = `${questionStep + 1}/${tasks.length}`;
+        }
+
+        const toggleStartButton = (show) => {
+            document.getElementById('start').style.display = show ? 'block' : 'none';
+        }
+
+        const toggleContinueButton = (show) => {
+            document.getElementById('continueQuiz').style.display = show ? 'block' : 'none';
+        }
+
+        const toggleFinishUI = (show) => {
+            document.getElementById('finish').style.display = show ? 'block' : 'none';
+        }
+
+        const toggleQuizUI = (show) => {
+            toggleStartButton(false);
+            document.getElementById('questionNumber').style.display = show ? 'block' : 'none';
+            document.getElementById('question').style.display = show ? 'block' : 'none';
+            document.getElementById('next').style.display = show ? 'block' : 'none';
+        }
+
+        const loadInitialData = () => {
+            const isStarted = localStorage.getItem(isStartedKey);
+            if (isStarted) toggleContinueButton(true)
+        }
+
+        loadInitialData();
+
+        const start = () => {
+            toggleQuizUI(true);
+            toggleContinueButton(false);
+
+            const questionNumbers = [...Array(tasks.length).keys()]
+            const shuffledQuestionNumbers = questionNumbers.sort((a, b) => 0.5 - Math.random());
+
+            localStorage.setItem(isStartedKey, true);
+            localStorage.setItem(questionStepKey, 0);
+            localStorage.setItem(questionFlowKey, shuffledQuestionNumbers);
+
+            questionsFlow = shuffledQuestionNumbers;
+
+            changeQuestion();
+            changeQuestionStep();
+        }
+
+        const continueQuiz = () => {
+            toggleQuizUI(true);
+            toggleContinueButton(false);
+            
+            questionsFlow = localStorage.getItem(questionFlowKey).split(',');
+            questionStep = Number(localStorage.getItem(questionStepKey));
+
+            changeQuestion();
+            changeQuestionStep();
+        }
+
+
+
+        const next = () => {
+            if (questionStep >= tasks.length - 1) {
+                toggleQuizUI(false);
+                toggleFinishUI(true);
+            } else {
+                increaseQuestionStep();
+                changeQuestion();
+                changeQuestionStep();
+            }
+        }
+        
+    </script>
+</body>
+</html>
